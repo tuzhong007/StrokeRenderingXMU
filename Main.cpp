@@ -157,6 +157,13 @@ int main()
 		glStencilFunc(GL_ALWAYS, 0, 0xFF);
 
 
+		////debug
+		//glUniform1i(glGetUniformLocation(quadraticProgram.ID, "isStencil"), (int)0);
+		//VAO1.Bind();
+		//glPatchParameteri(GL_PATCH_VERTICES, 3);
+		//glDrawArrays(GL_PATCHES, 0, indices.size());
+
+
 		// Swap the back buffer with the front buffer
 		glfwSwapBuffers(window);
 		// Take care of all GLFW events

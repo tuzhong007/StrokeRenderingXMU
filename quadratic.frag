@@ -107,7 +107,7 @@ void main()
 
 
 	// uv for parametrization
-	 solveUVByNewton();
+	 //solveUVByNewton();
 
 
 
