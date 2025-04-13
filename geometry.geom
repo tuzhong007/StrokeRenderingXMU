@@ -26,7 +26,7 @@ out vec2 initParameters; // initial value in Newton iteration
 void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
 {
     float w = 50.0;
-    vec3 color0 = (((segID[0] + segID[1]) % 4) == 1) ? vec3(1,0,0) : vec3(0,1,0);
+    vec3 color0 = (((segID[0] + segID[1]) % 4) == 1) ? vec3(0,0,1) : vec3(1,1,0);
     vec3 color1 = color0, color2 = color0;
 
 
@@ -122,7 +122,7 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
 void generateConcaveBoundary(vec2 p0, vec2 p1, vec2 p2)
 {
     float w = 50.0;
-    vec3 color0 = (((segID[0] + segID[1]) % 4) == 1) ? vec3(1,0,0) : vec3(0,1,0);
+    vec3 color0 = (((segID[0] + segID[1]) % 4) == 1) ? vec3(0,0,1) : vec3(1,1,0);
     vec3 color1 = color0, color2 = color0;
 
     vec2 tg0 = p1 - p0, tg2 = p2 - p1;

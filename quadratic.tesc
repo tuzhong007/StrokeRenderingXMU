@@ -7,7 +7,8 @@ in vec3 color[];
 
 out vec2 tcsTexCoord[];
 out vec3 tcsColor[];
-out float Phi[];
+highp out float Phi[];
+highp out float cosPhi[];
 out int segments[]; // Number of segments for each edge
 
 void main() {
@@ -22,9 +23,9 @@ void main() {
 
         tcsTexCoord[gl_InvocationID] = TexCoord[gl_InvocationID];
         tcsColor[gl_InvocationID] = color[gl_InvocationID];
-        //Phi[gl_InvocationID] = acos(dot(normalize(P0P1), normalize(P1P2)));
-        Phi[gl_InvocationID] = 0;
-        int seg = 10;
+        cosPhi[gl_InvocationID] = dot(normalize(P0P1), normalize(P1P2));
+        Phi[gl_InvocationID] = acos(cosPhi[gl_InvocationID]);
+        int seg = int(ceil(Phi[gl_InvocationID] / 0.5));
         segments[gl_InvocationID] = seg; // Number of segments for each edge
         
         gl_TessLevelOuter[0] = 1.0;
