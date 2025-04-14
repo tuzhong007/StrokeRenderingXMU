@@ -25,7 +25,7 @@ vector<Vertex> vertices =
 { //     COORDINATES     /        TexCoords      /   Colors  //
 	Vertex { vec3( 200.f, 400.f, 0.0f),     	vec2(0.0f, 0.0f),		vec3(1.0f, 0.0f, 0.0f)},
 	Vertex { vec3( 400.f, 1000.f, 0.0f),     	vec2(0.5f, 0.0f),		vec3(0.0f, 1.0f, 0.0f)},
-	Vertex { vec3( 600.f, 400.f, 0.0f),     	vec2(1.0f, 1.0f),		vec3(0.0f, 0.0f, 1.0f)},
+	Vertex { vec3( 500.f, 400.f, 0.0f),     	vec2(1.0f, 1.0f),		vec3(0.0f, 0.0f, 1.0f)},
 }; 
 
 vector<GLuint> indices =
@@ -51,7 +51,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	
 	// Create a GLFWwindow object of 800 by 800 pixels, naming it "YoutubeOpenGL"
-	GLFWwindow* window = glfwCreateWindow(width, height, "StrokeTexture", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(width, height, "Curvature Guided Adaptive Tessellation", NULL, NULL);
 	// Error check if the window fails to create
 	if (window == NULL)
 	{
@@ -133,6 +133,7 @@ int main()
 		glColorMask(0x00, 0x00, 0x00, 0x00);
 		// Draw the normal model
 		//model.Draw(shaderProgram, camera);
+		glUniform1f(glGetUniformLocation(quadraticProgram.ID, "w"), (float)100);
 
 		glUniform1i(glGetUniformLocation(quadraticProgram.ID, "isStencil"), (int)1);
 		VAO1.Bind();
@@ -140,7 +141,7 @@ int main()
 		glDrawArrays(GL_PATCHES, 0, indices.size());
 
 		// Make it so only the pixels without the value 1 pass the test
-		glStencilFunc(GL_EQUAL, 0, 0xFF);
+		glStencilFunc(GL_EQUAL, 255, 0xFF);
 		// Disable modifying of the stencil buffer
 		glStencilMask(0x00);
 		glColorMask(0xFF, 0xFF, 0xFF, 0xFF);

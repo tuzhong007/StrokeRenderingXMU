@@ -4,8 +4,8 @@ layout(isolines) in;
 
 in vec2 tcsTexCoord[];
 in vec3 tcsColor[];
-highp in float Phi[];
-highp in float cosPhi[];
+in float Phi[];
+in float cosPhi[];
 in int segments[];
 
 layout(location = 0) out vec3 color;
@@ -20,12 +20,12 @@ vec2 quadraticBezier(vec2 p0, vec2 p1, vec2 p2, float t) {
 }
 
 // A = 2|P1-P0|, B = 2|P2-P1|, C = cos(Phi), D = cos(i * Phi / K), where K is the total amount of segments
-// solve t_i from the correspoding angle relation
-highp vec2 calculate_ti_From_Phii(highp float A, highp float B, highp float C, highp float D) {
-    highp float sigma1 = -A*A* D*D + A*A + 2*A*B*C*D*D - 2*A*B*C + B*B * C*C - B*B * D*D;
-    highp float sigma2 = B * D * sqrt((C*C - 1) * (D*D - 1));
-    highp float t1 = A * (A - A * D*D - B*C + sigma2 + B*C*D*D)/sigma1;
-    highp float t2 = A * (A - A * D*D - B*C - sigma2 + B*C*D*D)/sigma1;
+// solve t_i from the correspoding angle relation: the angle between the tangent at t_i and the tangent at 0 is u * Phi
+vec2 calculate_ti_From_Phii(float A, float B, float C, float D) {
+    float sigma1 = -A*A* D*D + A*A + 2*A*B*C*D*D - 2*A*B*C + B*B * C*C - B*B * D*D;
+    float sigma2 = B * D * sqrt((C*C - 1) * (D*D - 1));
+    float t1 = A * (A - A * D*D - B*C + sigma2 + B*C*D*D)/sigma1;
+    float t2 = A * (A - A * D*D - B*C - sigma2 + B*C*D*D)/sigma1;
     return vec2(t1, t2);
 }
 
@@ -44,7 +44,7 @@ void main() {
 		return;
 	}
 
-    highp float A = 2 * length(P1 - P0), B = 2 * length(P2 - P1), C = cosPhi[0], D = cos(u * Phi[0]);
+    float A = 2 * length(P1 - P0), B = 2 * length(P2 - P1), C = cosPhi[0], D = cos(u * Phi[0]);
 
     vec2 t1t2 = calculate_ti_From_Phii(A, B, C, D);
     float t1 = t1t2.x, t2 = t1t2.y;

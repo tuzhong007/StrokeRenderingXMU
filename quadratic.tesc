@@ -7,8 +7,8 @@ in vec3 color[];
 
 out vec2 tcsTexCoord[];
 out vec3 tcsColor[];
-highp out float Phi[];
-highp out float cosPhi[];
+out float Phi[];
+out float cosPhi[];
 out int segments[]; // Number of segments for each edge
 
 void main() {

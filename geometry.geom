@@ -6,6 +6,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform bool isStencil;
+uniform float w;
 
 layout(location = 0) in vec3 color[];
 layout(location = 1) in float parameterT[];
@@ -25,8 +26,8 @@ out vec2 initParameters; // initial value in Newton iteration
 
 void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
 {
-    float w = 50.0;
-    vec3 color0 = (((segID[0] + segID[1]) % 4) == 1) ? vec3(0,0,1) : vec3(1,1,0);
+    //vec3 color0 = (((segID[0] + segID[1]) % 4) == 1) ? vec3(0,1,1) : vec3(1,1,0);
+    vec3 color0 = vec3(0, 0, 0);
     vec3 color1 = color0, color2 = color0;
 
 
@@ -121,7 +122,6 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
 
 void generateConcaveBoundary(vec2 p0, vec2 p1, vec2 p2)
 {
-    float w = 50.0;
     vec3 color0 = (((segID[0] + segID[1]) % 4) == 1) ? vec3(0,0,1) : vec3(1,1,0);
     vec3 color1 = color0, color2 = color0;
 
@@ -211,5 +211,8 @@ void main() {
     // p1 is the intersection point of the two tangents
     p1 = getIntersection(p0, p0p1_direction, p2, p1p2_direction);
     if (!isStencil) generateConvexBoundary(p0, p1, p2);
-    else generateConcaveBoundary(p0, p1, p2);
+    else {
+        generateConcaveBoundary(p0, p1, p2);
+        generateConvexBoundary(p0, p1, p2);
+    }
 }
