@@ -112,7 +112,8 @@ int main()
 
 	glDisable(GL_DEPTH_TEST);
 	// Enables the Stencil Buffer
-	glEnable(GL_STENCIL_TEST);
+	//.glEnable(GL_STENCIL_TEST);
+	glDisable(GL_STENCIL_TEST);
 	// Sets rules for outcomes of stecil tests
 	glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
 
@@ -126,36 +127,36 @@ int main()
 		// Clean the back buffer and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		// Make it so the stencil test always passes
-		glStencilFunc(GL_ALWAYS, 1, 0xFF);
-		// Enable modifying of the stencil buffer
-		glStencilMask(0xFF);
-		glColorMask(0x00, 0x00, 0x00, 0x00);
-		// Draw the normal model
-		//model.Draw(shaderProgram, camera);
+		//// Make it so the stencil test always passes
+		//glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		//// Enable modifying of the stencil buffer
+		//glStencilMask(0xFF);
+		//glColorMask(0x00, 0x00, 0x00, 0x00);
+		//// Draw the normal model
+		////model.Draw(shaderProgram, camera);
+		
+
+		//glUniform1i(glGetUniformLocation(quadraticProgram.ID, "isStencil"), (int)1);
+		//VAO1.Bind();
+		//glPatchParameteri(GL_PATCH_VERTICES, 3);
+		//glDrawArrays(GL_PATCHES, 0, indices.size());
+
+		//// Make it so only the pixels without the value 1 pass the test
+		//glStencilFunc(GL_EQUAL, 255, 0xFF);
+		//// Disable modifying of the stencil buffer
+		//glStencilMask(0x00);
+		//glColorMask(0xFF, 0xFF, 0xFF, 0xFF);
 		glUniform1f(glGetUniformLocation(quadraticProgram.ID, "w"), (float)100);
-
-		glUniform1i(glGetUniformLocation(quadraticProgram.ID, "isStencil"), (int)1);
-		VAO1.Bind();
-		glPatchParameteri(GL_PATCH_VERTICES, 3);
-		glDrawArrays(GL_PATCHES, 0, indices.size());
-
-		// Make it so only the pixels without the value 1 pass the test
-		glStencilFunc(GL_EQUAL, 255, 0xFF);
-		// Disable modifying of the stencil buffer
-		glStencilMask(0x00);
-		glColorMask(0xFF, 0xFF, 0xFF, 0xFF);
-
 		glUniform1i(glGetUniformLocation(quadraticProgram.ID, "isStencil"), (int)0);
 		VAO1.Bind();
 		glPatchParameteri(GL_PATCH_VERTICES, 3);
 		glDrawArrays(GL_PATCHES, 0, indices.size());
 
 
-		// Enable modifying of the stencil buffer
-		glStencilMask(0xFF);
-		// Clear stencil buffer
-		glStencilFunc(GL_ALWAYS, 0, 0xFF);
+		//// Enable modifying of the stencil buffer
+		//glStencilMask(0xFF);
+		//// Clear stencil buffer
+		//glStencilFunc(GL_ALWAYS, 0, 0xFF);
 
 
 		////debug

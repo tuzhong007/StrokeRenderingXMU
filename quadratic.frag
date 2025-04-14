@@ -3,6 +3,7 @@ out vec4 FragColor;
 
 in vec2 gTexCoord;
 in vec3 gColor;
+flat in int isConvex;
 in vec2 posInLocalSpace; // position of the vertex in local space
 in vec4 p0d0;
 in vec4 p1d1;
@@ -96,6 +97,7 @@ void main()
 	gy = 2 * uv.x * uyvy.x -  uyvy.y;
 
 	float sd = g / sqrt(gx * gx + gy * gy);
+	if (isConvex == 0) sd = -sd; 
 	if (sd > 0.5) discard;
 	if (isStencil) return;
 

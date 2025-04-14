@@ -17,17 +17,26 @@ layout(location = 5) in int segID[];
 
 out vec2 gTexCoord; // Pass texture coordinates to fragment shader
 out vec3 gColor;    // Pass color to fragment shader
+flat out int isConvex;
 out vec2 posInLocalSpace; // position of the vertex in local space
 out vec4 p0d0;
 out vec4 p1d1;
 out vec4 p2d2;
 out vec2 initParameters; // initial value in Newton iteration
 
+// Function to calculate barycentric coordinates
+vec3 barycentricCoordinate(vec2 p0, vec2 p1, vec2 p2, vec2 p) {
+	float area = ((p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y));
+	float alpha = ((p1.x - p.x) * (p2.y - p.y) - (p2.x - p.x) * (p1.y - p.y)) / area;
+	float beta = -((p0.x - p.x) * (p2.y - p.y) - (p2.x - p.x) * (p0.y - p.y)) / area;
+	float gamma = 1.0f - alpha - beta;
+	return vec3(alpha, beta, gamma);
+}
 
 void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
 {
-    //vec3 color0 = (((segID[0] + segID[1]) % 4) == 1) ? vec3(0,1,1) : vec3(1,1,0);
-    vec3 color0 = vec3(0, 0, 0);
+    vec3 color0 = (((segID[0] + segID[1]) % 4) == 1) ? vec3(0,1,1) : vec3(1,1,0);
+    //vec3 color0 = vec3(0, 0, 0);
     vec3 color1 = color0, color2 = color0;
 
 
@@ -50,6 +59,7 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     gl_Position = projection * view * model * vec4(p0 + w * n0, 0, 1);
     gTexCoord = vec2(0, 0);
     gColor = color0;
+    isConvex = 1;
     posInLocalSpace = p0 + w * n0;
     initParameters = vec2(0, 1);
     EmitVertex();
@@ -57,6 +67,7 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     gl_Position = projection * view * model * vec4(p1 + d, 0, 1);
     gTexCoord = vec2(0.5, 0);
     gColor = color1;
+    isConvex = 1;
     posInLocalSpace = p1 + d;
     initParameters = vec2(0.5, 1);
     EmitVertex();
@@ -64,32 +75,66 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     gl_Position = projection * view * model * vec4(p2 + w * n2, 0, 1);
     gTexCoord = vec2(1, 1);
     gColor = color2;
+    isConvex = 1;
     posInLocalSpace = p2 + w * n2;
     initParameters = vec2(1, 1);
     EmitVertex();
     EndPrimitive();
 
 
+    // p0'', p1'', p2''
+    vec2 p0_pp = p0 - w * n0, p1_pp = p1 - d, p2_pp = p2 - w * n2;
+    vec2 tg0_pp = p1_pp - p0_pp, tg2_pp = p2_pp - p1_pp;
+    bool isReversed;
+    if (dot(tg0, tg0_pp) < 0 || dot(tg2, tg2_pp) < 0){
+    		isReversed = true;
+	} else {
+		isReversed = false;
+	}
+
+    // calculate the barycentric coordinates of p0', p2' in the convex triangle p0'', p1'', p2''
+    // for the signed distance calculation of the offset curve in the triangle p0'', p1'', p2''
+    vec3 baryP0_Prime = barycentricCoordinate(p0_pp, p1_pp, p2_pp, p0 + w * n0);
+    vec3 baryP2_Prime = barycentricCoordinate(p0_pp, p1_pp, p2_pp, p2 + w * n2);
     // linear triangles
+
     // 1st
     // p0'
     gl_Position = projection * view * model * vec4(p0 + w * n0, 0, 1);
-    gTexCoord = vec2(0.5, 0.5);
+    //gTexCoord = vec2(0.5, 0.5);
+    gTexCoord = baryP0_Prime.y * vec2(0.5, 0) + baryP0_Prime.z * vec2(1, 1);
+    if (isReversed) {
+        // edge case, render full color
+		gTexCoord = vec2(1, 0);
+	}
     gColor = color0;
+    isConvex = 0;
     posInLocalSpace = p0 + w * n0;
     initParameters = vec2(0, 1);
     EmitVertex();
     // p2'
     gl_Position = projection * view * model * vec4(p2 + w * n2, 0, 1);
-    gTexCoord = vec2(0.5, 0.5);
+    //gTexCoord = vec2(0.5, 0.5);
+    gTexCoord = baryP2_Prime.y * vec2(0.5, 0) + baryP2_Prime.z * vec2(1, 1);
+    if (isReversed) {
+        // edge case, render full color
+		gTexCoord = vec2(1, 0);
+	}
     gColor = color2;
+    isConvex = 0;
     posInLocalSpace = p2 + w * n2;
     initParameters = vec2(1, 1);
     EmitVertex();
     // p0''
     gl_Position = projection * view * model * vec4(p0 - w * n0, 0, 1);
-    gTexCoord = vec2(0.5, 0.5);
+    //gTexCoord = vec2(0.5, 0.5);
+    gTexCoord = vec2(0, 0);
+    if (isReversed) {
+        // edge case, render full color
+		gTexCoord = vec2(1, 0);
+	}
     gColor = color0;
+    isConvex = 0;
     posInLocalSpace = p0 - w * n0;
     initParameters = vec2(0, 0);
     EmitVertex();
@@ -98,22 +143,40 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     //2nd
     // p0''
     gl_Position = projection * view * model * vec4(p0 - w * n0, 0, 1);
-    gTexCoord = vec2(0.5, 0.5);
+    //gTexCoord = vec2(0.5, 0.5);
+    gTexCoord = vec2(0, 0);
+    if (isReversed) {
+        // edge case, render full color
+		gTexCoord = vec2(1, 0);
+	}
     gColor = color0;
+    isConvex = 0;
     posInLocalSpace = p0 - w * n0;
     initParameters = vec2(0, 0);
     EmitVertex();
     // p2''
     gl_Position = projection * view * model * vec4(p2 - w * n2, 0, 1);
-    gTexCoord = vec2(0.5, 0.5);
+    //gTexCoord = vec2(0.5, 0.5);
+    gTexCoord = vec2(1, 1);
+    if (isReversed) {
+        // edge case, render full color
+		gTexCoord = vec2(1, 0);
+	}
     gColor = color2;
+    isConvex = 0;
     posInLocalSpace = p2 - w * n2;
     initParameters = vec2(1, 0);
     EmitVertex();
     // p2'
     gl_Position = projection * view * model * vec4(p2 + w * n2, 0, 1);
-    gTexCoord = vec2(0.5, 0.5);
+    //gTexCoord = vec2(0.5, 0.5);
+    gTexCoord = baryP2_Prime.y * vec2(0.5, 0) + baryP2_Prime.z * vec2(1, 1);
+    if (isReversed) {
+        // edge case, render full color
+		gTexCoord = vec2(1, 0);
+	}
     gColor = color2;
+    isConvex = 0;
     posInLocalSpace = p2 + w * n2;
     initParameters = vec2(1, 1);
     EmitVertex();
@@ -212,7 +275,7 @@ void main() {
     p1 = getIntersection(p0, p0p1_direction, p2, p1p2_direction);
     if (!isStencil) generateConvexBoundary(p0, p1, p2);
     else {
-        generateConcaveBoundary(p0, p1, p2);
+        //generateConcaveBoundary(p0, p1, p2);
         generateConvexBoundary(p0, p1, p2);
     }
 }
