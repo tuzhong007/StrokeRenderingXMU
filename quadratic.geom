@@ -27,6 +27,10 @@ out vec2 initParameters; // initial value in Newton iteration
 // Function to calculate barycentric coordinates
 vec3 barycentricCoordinate(vec2 p0, vec2 p1, vec2 p2, vec2 p) {
 	float area = ((p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y));
+    // if p0, p1, p2 are collinear, or area = 0, return a convenient value
+    if (abs(area) < 1e-3) {
+        return vec3(0, 0, 0);
+    }
 	float alpha = ((p1.x - p.x) * (p2.y - p.y) - (p2.x - p.x) * (p1.y - p.y)) / area;
 	float beta = -((p0.x - p.x) * (p2.y - p.y) - (p2.x - p.x) * (p0.y - p.y)) / area;
 	float gamma = 1.0f - alpha - beta;
@@ -49,7 +53,15 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     float cosPhi = dot(tg0, tg2) / length(tg0) / length(tg2);
     float cosPhi_2 = sqrt((cosPhi + 1.0) / 2);
     // offset of p1
-    vec2 d = (n0 + n2) / length(n0 + n2) * w / cosPhi_2;
+    vec2 d;
+    // if tg0 and tg2 are parallel, the offset is w * n0
+    bool isDegenerate = (abs(cosPhi) > 1 - 1e-3);
+    if (isDegenerate) {
+		d = w * n0;
+	} else {
+		// offset of p1
+		d = (n0 + n2) / length(n0 + n2) * w / cosPhi_2;
+	}
 
     p0d0 = vec4(p0, w * n0), p1d1 = vec4(p1, d), p2d2 = vec4(p2, w * n2);
 
@@ -103,7 +115,7 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     gl_Position = projection * view * model * vec4(p0 + w * n0, 0, 1);
     //gTexCoord = vec2(0.5, 0.5);
     gTexCoord = baryP0_Prime.y * vec2(0.5, 0) + baryP0_Prime.z * vec2(1, 1);
-    if (isReversed) {
+    if (isReversed || isDegenerate) {
         // edge case, render full color
 		gTexCoord = vec2(1, 0);
 	}
@@ -116,7 +128,7 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     gl_Position = projection * view * model * vec4(p2 + w * n2, 0, 1);
     //gTexCoord = vec2(0.5, 0.5);
     gTexCoord = baryP2_Prime.y * vec2(0.5, 0) + baryP2_Prime.z * vec2(1, 1);
-    if (isReversed) {
+    if (isReversed || isDegenerate) {
         // edge case, render full color
 		gTexCoord = vec2(1, 0);
 	}
@@ -129,7 +141,7 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     gl_Position = projection * view * model * vec4(p0 - w * n0, 0, 1);
     //gTexCoord = vec2(0.5, 0.5);
     gTexCoord = vec2(0, 0);
-    if (isReversed) {
+    if (isReversed || isDegenerate) {
         // edge case, render full color
 		gTexCoord = vec2(1, 0);
 	}
@@ -145,7 +157,7 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     gl_Position = projection * view * model * vec4(p0 - w * n0, 0, 1);
     //gTexCoord = vec2(0.5, 0.5);
     gTexCoord = vec2(0, 0);
-    if (isReversed) {
+    if (isReversed || isDegenerate) {
         // edge case, render full color
 		gTexCoord = vec2(1, 0);
 	}
@@ -158,7 +170,7 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     gl_Position = projection * view * model * vec4(p2 - w * n2, 0, 1);
     //gTexCoord = vec2(0.5, 0.5);
     gTexCoord = vec2(1, 1);
-    if (isReversed) {
+    if (isReversed || isDegenerate) {
         // edge case, render full color
 		gTexCoord = vec2(1, 0);
 	}
@@ -171,7 +183,7 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     gl_Position = projection * view * model * vec4(p2 + w * n2, 0, 1);
     //gTexCoord = vec2(0.5, 0.5);
     gTexCoord = baryP2_Prime.y * vec2(0.5, 0) + baryP2_Prime.z * vec2(1, 1);
-    if (isReversed) {
+    if (isReversed || isDegenerate) {
         // edge case, render full color
 		gTexCoord = vec2(1, 0);
 	}
@@ -242,6 +254,12 @@ mat2 inverse(mat2 m) {
 
 // get the intersection point for two lines: a + alpha*b and c + beta*d, with alpha, beta in R
 vec2 getIntersection(vec2 a, vec2 b, vec2 c, vec2 d) {
+    // check if b and d are parallel
+    float det = b.x * d.y - b.y * d.x;
+    if (abs(det) < 1e-3) {
+		// lines are parallel, return a
+		return (a + c) / 2;
+	}
 	vec2 alpha_beta = inverse(mat2(b, -d)) * (c - a);
     return a + alpha_beta.x * b;
 }

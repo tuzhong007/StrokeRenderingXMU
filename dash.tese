@@ -16,11 +16,20 @@ layout(location = 4) out vec2 P2;
 layout(location = 5) out int segID;
 layout(location = 6) out float s_ti;
 
+
+vec2 quadraticBezier(vec2 p0, vec2 p1, vec2 p2, float t) {
+	return (1.0 - t) * (1.0 - t) * p0 + 2.0 * (1.0 - t) * t * p1 + t * t * p2;
+}
+
 // get the analytic arclength of the quadratic curve from t=0 to t=t
 // https://stackoverflow.com/questions/11854907/calculate-the-length-of-a-segment-of-a-quadratic-bezier
 float getArcLength_t(vec2 p0, vec2 p1, vec2 p2, float t) {
     float x0 = p0.x, y0 = p0.y, x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y;
     float ax,ay,bx,by,A,B,C,b,c,u,k,L;
+    // check if the quadratic curve is degenerate, or p0p1 and p1p2 are parallel
+    if (abs((x1-x0)*(y2-y1)-(x2-x1)*(y1-y0)) < 1e-3) {
+		return length(quadraticBezier(p0, p1, p2, t) - p0);
+	}
     ax=x0-x1-x1+x2;
     ay=y0-y1-y1+y2;
     bx=x1+x1-x0-x0;
@@ -41,9 +50,6 @@ float getArcLength_t(vec2 p0, vec2 p1, vec2 p2, float t) {
     return L;
 }
 
-vec2 quadraticBezier(vec2 p0, vec2 p1, vec2 p2, float t) {
-	return (1.0 - t) * (1.0 - t) * p0 + 2.0 * (1.0 - t) * t * p1 + t * t * p2;
-}
 
 // A = 2|P1-P0|, B = 2|P2-P1|, C = cos(Phi), D = cos(i * Phi / K), where K is the total amount of segments
 // solve t_i from the correspoding angle relation: the angle between the tangent at t_i and the tangent at 0 is u * Phi

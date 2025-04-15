@@ -24,7 +24,7 @@ using glm::mat4;
 vector<Vertex> vertices =
 { //     COORDINATES     /        TexCoords      /   Colors  //
 	Vertex { vec3( 200.f, 100.f, 0.0f),     	vec2(0.0f, 0.0f),		vec3(1.0f, 0.0f, 0.0f)},
-	Vertex { vec3( 400.f, 1000.f, 0.0f),     	vec2(0.5f, 0.0f),		vec3(0.0f, 1.0f, 0.0f)},
+	Vertex { vec3( 400.f, 500.f, 0.0f),     	vec2(0.5f, 0.0f),		vec3(0.0f, 1.0f, 0.0f)},
 	Vertex { vec3( 600.f, 100.f, 0.0f),     	vec2(1.0f, 1.0f),		vec3(0.0f, 0.0f, 1.0f)},
 }; 
 

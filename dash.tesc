@@ -25,11 +25,11 @@ void main() {
         tcsColor[gl_InvocationID] = color[gl_InvocationID];
         cosPhi[gl_InvocationID] = dot(normalize(P0P1), normalize(P1P2));
         Phi[gl_InvocationID] = acos(cosPhi[gl_InvocationID]);
-        int seg = int(ceil(Phi[gl_InvocationID] / 0.5));
+        int seg = int(ceil((Phi[gl_InvocationID] + 1e-3) / 0.5));
         segments[gl_InvocationID] = seg; // Number of segments for each edge
         
         gl_TessLevelOuter[0] = 1.0;
-        gl_TessLevelOuter[1] = seg; //. to be modified
+        gl_TessLevelOuter[1] = seg; 
         
     }
 }
