@@ -1,5 +1,5 @@
 ﻿  Main.cpp
-E:\githubProjects\opengl-tutorials\tesellationTest\Main.cpp(153,43): warning C4267: “参数”: 从“size_t”转换到“GLsizei”，可能丢失数据
+E:\githubProjects\opengl-tutorials\tesellationTest\Main.cpp(157,43): warning C4267: “参数”: 从“size_t”转换到“GLsizei”，可能丢失数据
 glfw3.lib(init.obj) : warning LNK4099: 未找到 PDB“”(使用“glfw3.lib(init.obj)”或在“”中寻找)；正在链接对象，如同没有调试信息一样
 glfw3.lib(window.obj) : warning LNK4099: 未找到 PDB“”(使用“glfw3.lib(window.obj)”或在“”中寻找)；正在链接对象，如同没有调试信息一样
 glfw3.lib(context.obj) : warning LNK4099: 未找到 PDB“”(使用“glfw3.lib(context.obj)”或在“”中寻找)；正在链接对象，如同没有调试信息一样

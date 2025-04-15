@@ -174,9 +174,12 @@
     <ClInclude Include="VBO.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="geometry.geom" />
+    <None Include="dash.geom" />
     <None Include="geometry.gep" />
+    <None Include="dash.tesc" />
+    <None Include="dash.tese" />
     <None Include="quadratic.frag" />
+    <None Include="quadratic.geom" />
     <None Include="quadratic.tesc" />
     <None Include="quadratic.tese" />
     <None Include="quadratic.vert" />

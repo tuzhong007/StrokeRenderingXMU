@@ -9,6 +9,7 @@ in vec4 p0d0;
 in vec4 p1d1;
 in vec4 p2d2;
 in vec2 initParameters;
+in float segL;
 
 uniform bool isStencil;
 uniform sampler2D tex0;

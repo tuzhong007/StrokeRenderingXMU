@@ -68,13 +68,22 @@
       <Filter>Resource Files\Shaders</Filter>
     </None>
     <None Include="geometry.gep" />
-    <None Include="geometry.geom">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
     <None Include="quadratic.tesc">
       <Filter>Resource Files\Shaders</Filter>
     </None>
     <None Include="quadratic.tese">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="dash.tesc">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="dash.tese">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="quadratic.geom">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="dash.geom">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>
