@@ -86,5 +86,14 @@
     <None Include="dash.geom">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="dash_parallel.geom">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="dash_parallel.tesc">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="dash_parallel.tese">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

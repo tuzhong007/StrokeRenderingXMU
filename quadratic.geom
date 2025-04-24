@@ -16,6 +16,7 @@ layout(location = 4) in vec2 P2[];
 layout(location = 5) in int segID[];
 
 out vec2 gTexCoord; // Pass texture coordinates to fragment shader
+out vec2 hTexCoord;
 out vec3 gColor;    // Pass color to fragment shader
 flat out int isConvex;
 out vec2 posInLocalSpace; // position of the vertex in local space
@@ -65,35 +66,6 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
 
     p0d0 = vec4(p0, w * n0), p1d1 = vec4(p1, d), p2d2 = vec4(p2, w * n2);
 
-    // curved triangle
-    // 1st
-    // p0'
-    gl_Position = projection * view * model * vec4(p0 + w * n0, 0, 1);
-    gTexCoord = vec2(0, 0);
-    gColor = color0;
-    isConvex = 1;
-    posInLocalSpace = p0 + w * n0;
-    initParameters = vec2(0, 1);
-    EmitVertex();
-    // p1'
-    gl_Position = projection * view * model * vec4(p1 + d, 0, 1);
-    gTexCoord = vec2(0.5, 0);
-    gColor = color1;
-    isConvex = 1;
-    posInLocalSpace = p1 + d;
-    initParameters = vec2(0.5, 1);
-    EmitVertex();
-    // p2'
-    gl_Position = projection * view * model * vec4(p2 + w * n2, 0, 1);
-    gTexCoord = vec2(1, 1);
-    gColor = color2;
-    isConvex = 1;
-    posInLocalSpace = p2 + w * n2;
-    initParameters = vec2(1, 1);
-    EmitVertex();
-    EndPrimitive();
-
-
     // p0'', p1'', p2''
     vec2 p0_pp = p0 - w * n0, p1_pp = p1 - d, p2_pp = p2 - w * n2;
     vec2 tg0_pp = p1_pp - p0_pp, tg2_pp = p2_pp - p1_pp;
@@ -103,11 +75,58 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
 	} else {
 		isReversed = false;
 	}
-
-    // calculate the barycentric coordinates of p0', p2' in the convex triangle p0'', p1'', p2''
+    // calculate the barycentric coordinates of p0', p1', p2' in the convex triangle p0'', p1'', p2''
     // for the signed distance calculation of the offset curve in the triangle p0'', p1'', p2''
     vec3 baryP0_Prime = barycentricCoordinate(p0_pp, p1_pp, p2_pp, p0 + w * n0);
+    vec3 baryP1_Prime = barycentricCoordinate(p0_pp, p1_pp, p2_pp, p1 + d);
     vec3 baryP2_Prime = barycentricCoordinate(p0_pp, p1_pp, p2_pp, p2 + w * n2);
+
+    // curved triangles
+    // 1st
+    // p0'
+    gl_Position = projection * view * model * vec4(p0 + w * n0, 0, 1);
+    gTexCoord = vec2(0, 0);
+    hTexCoord = baryP0_Prime.y * vec2(0.5, 0) + baryP0_Prime.z * vec2(1, 1);
+    if (isReversed || isDegenerate) {
+        // edge case, render full color
+		hTexCoord = vec2(1, 0);
+	}
+    gColor = color0;
+    isConvex = 1;
+    posInLocalSpace = p0 + w * n0;
+    initParameters = vec2(0, 1);
+    EmitVertex();
+    // p1'
+    gl_Position = projection * view * model * vec4(p1 + d, 0, 1);
+    gTexCoord = vec2(0.5, 0);
+    hTexCoord = baryP1_Prime.y * vec2(0.5, 0) + baryP1_Prime.z * vec2(1, 1);
+    if (isReversed || isDegenerate) {
+        // edge case, render full color
+		hTexCoord = vec2(1, 0);
+	}
+    gColor = color1;
+    isConvex = 1;
+    posInLocalSpace = p1 + d;
+    initParameters = vec2(0.5, 1);
+    EmitVertex();
+    // p2'
+    gl_Position = projection * view * model * vec4(p2 + w * n2, 0, 1);
+    gTexCoord = vec2(1, 1);
+    hTexCoord = baryP2_Prime.y * vec2(0.5, 0) + baryP2_Prime.z * vec2(1, 1);
+    if (isReversed || isDegenerate) {
+        // edge case, render full color
+		hTexCoord = vec2(1, 0);
+	}
+    gColor = color2;
+    isConvex = 1;
+    posInLocalSpace = p2 + w * n2;
+    initParameters = vec2(1, 1);
+    EmitVertex();
+    EndPrimitive();
+
+
+    
+    
     // linear triangles
 
     // 1st

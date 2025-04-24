@@ -175,6 +175,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="dash.geom" />
+    <None Include="dash_parallel.geom" />
+    <None Include="dash_parallel.tesc" />
+    <None Include="dash_parallel.tese" />
     <None Include="geometry.gep" />
     <None Include="dash.tesc" />
     <None Include="dash.tese" />

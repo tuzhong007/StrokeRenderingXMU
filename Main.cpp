@@ -24,8 +24,8 @@ using glm::mat4;
 vector<Vertex> vertices =
 { //     COORDINATES     /        TexCoords      /   Colors  //
 	Vertex { vec3( 200.f, 100.f, 0.0f),     	vec2(0.0f, 0.0f),		vec3(1.0f, 0.0f, 0.0f)},
-	Vertex { vec3( 400.f, 500.f, 0.0f),     	vec2(0.5f, 0.0f),		vec3(0.0f, 1.0f, 0.0f)},
-	Vertex { vec3( 600.f, 100.f, 0.0f),     	vec2(1.0f, 1.0f),		vec3(0.0f, 0.0f, 1.0f)},
+	Vertex { vec3( 400.f, 1000.f, 0.0f),     	vec2(0.5f, 0.0f),		vec3(0.0f, 1.0f, 0.0f)},
+	Vertex { vec3( 500.f, 100.f, 0.0f),     	vec2(1.0f, 1.0f),		vec3(0.0f, 0.0f, 1.0f)},
 }; 
 
 vector<GLuint> indices =
@@ -91,7 +91,7 @@ int main()
 	// Generates Shader object using shaders default.vert and default.frag
 	//Shader quadraticProgram("quadratic.vert", "quadratic.frag", "quadratic.geom", "quadratic.tesc", "quadratic.tese");
 	// dash rendering program
-	Shader quadraticProgram("quadratic.vert", "quadratic.frag", "dash.geom", "dash.tesc", "dash.tese");
+	Shader quadraticProgram("quadratic.vert", "quadratic.frag", "dash_parallel.geom", "dash_parallel.tesc", "dash_parallel.tese");
 	std::string parentDir = (fs::current_path().fs::path::parent_path()).string();
 	std::string texPath = "/Resources/YoutubeOpenGL 6 - Textures/";
 
@@ -149,9 +149,9 @@ int main()
 		//glColorMask(0xFF, 0xFF, 0xFF, 0xFF);
 		
 		//glUniform1i(glGetUniformLocation(quadraticProgram.ID, "isStencil"), (int)0);
-		glUniform1f(glGetUniformLocation(quadraticProgram.ID, "w"), (float)100);
-		glUniform1f(glGetUniformLocation(quadraticProgram.ID, "l1"), (float)200);
-		glUniform1f(glGetUniformLocation(quadraticProgram.ID, "l2"), (float)50);
+		glUniform1f(glGetUniformLocation(quadraticProgram.ID, "w"), (float)50);
+		glUniform1f(glGetUniformLocation(quadraticProgram.ID, "l1"), (float)10);
+		glUniform1f(glGetUniformLocation(quadraticProgram.ID, "l2"), (float)10);
 		VAO1.Bind();
 		glPatchParameteri(GL_PATCH_VERTICES, 3);
 		glDrawArrays(GL_PATCHES, 0, indices.size());

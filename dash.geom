@@ -1,6 +1,6 @@
 #version 450 core
 layout(lines) in;
-layout(triangle_strip, max_vertices = 99) out;
+layout(triangle_strip, max_vertices = 36) out;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -19,6 +19,7 @@ layout(location = 5) in int segID[];
 layout(location = 6) in float s_ti[];
 
 out vec2 gTexCoord; // Pass texture coordinates to fragment shader
+out vec2 hTexCoord;
 out vec3 gColor;    // Pass color to fragment shader
 flat out int isConvex;
 out vec2 posInLocalSpace; // position of the vertex in local space
@@ -27,6 +28,7 @@ out vec4 p1d1;
 out vec4 p2d2;
 out vec2 initParameters; // initial value in Newton iteration
 out float segL;
+out float lastTexCoord; // end texture coordinate of the last solid line
 
 // Function to calculate barycentric coordinates
 vec3 barycentricCoordinate(vec2 p0, vec2 p1, vec2 p2, vec2 p) {
@@ -69,35 +71,6 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
 
     p0d0 = vec4(p0, w * n0), p1d1 = vec4(p1, d), p2d2 = vec4(p2, w * n2);
 
-    // curved triangle
-    // 1st
-    // p0'
-    gl_Position = projection * view * model * vec4(p0 + w * n0, 0, 1);
-    gTexCoord = vec2(0, 0);
-    gColor = color0;
-    isConvex = 1;
-    posInLocalSpace = p0 + w * n0;
-    initParameters = vec2(0, 1);
-    EmitVertex();
-    // p1'
-    gl_Position = projection * view * model * vec4(p1 + d, 0, 1);
-    gTexCoord = vec2(0.5, 0);
-    gColor = color1;
-    isConvex = 1;
-    posInLocalSpace = p1 + d;
-    initParameters = vec2(0.5, 1);
-    EmitVertex();
-    // p2'
-    gl_Position = projection * view * model * vec4(p2 + w * n2, 0, 1);
-    gTexCoord = vec2(1, 1);
-    gColor = color2;
-    isConvex = 1;
-    posInLocalSpace = p2 + w * n2;
-    initParameters = vec2(1, 1);
-    EmitVertex();
-    EndPrimitive();
-
-
     // p0'', p1'', p2''
     vec2 p0_pp = p0 - w * n0, p1_pp = p1 - d, p2_pp = p2 - w * n2;
     vec2 tg0_pp = p1_pp - p0_pp, tg2_pp = p2_pp - p1_pp;
@@ -107,11 +80,58 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
 	} else {
 		isReversed = false;
 	}
-
-    // calculate the barycentric coordinates of p0', p2' in the convex triangle p0'', p1'', p2''
+    // calculate the barycentric coordinates of p0', p1', p2' in the convex triangle p0'', p1'', p2''
     // for the signed distance calculation of the offset curve in the triangle p0'', p1'', p2''
     vec3 baryP0_Prime = barycentricCoordinate(p0_pp, p1_pp, p2_pp, p0 + w * n0);
+    vec3 baryP1_Prime = barycentricCoordinate(p0_pp, p1_pp, p2_pp, p1 + d);
     vec3 baryP2_Prime = barycentricCoordinate(p0_pp, p1_pp, p2_pp, p2 + w * n2);
+
+    // curved triangles
+    // 1st
+    // p0'
+    gl_Position = projection * view * model * vec4(p0 + w * n0, 0, 1);
+    gTexCoord = vec2(0, 0);
+    hTexCoord = baryP0_Prime.y * vec2(0.5, 0) + baryP0_Prime.z * vec2(1, 1);
+    if (isReversed || isDegenerate) {
+        // edge case, render full color
+		hTexCoord = vec2(1, 0);
+	}
+    gColor = color0;
+    isConvex = 1;
+    posInLocalSpace = p0 + w * n0;
+    initParameters = vec2(0, 1);
+    EmitVertex();
+    // p1'
+    gl_Position = projection * view * model * vec4(p1 + d, 0, 1);
+    gTexCoord = vec2(0.5, 0);
+    hTexCoord = baryP1_Prime.y * vec2(0.5, 0) + baryP1_Prime.z * vec2(1, 1);
+    if (isReversed || isDegenerate) {
+        // edge case, render full color
+		hTexCoord = vec2(1, 0);
+	}
+    gColor = color1;
+    isConvex = 1;
+    posInLocalSpace = p1 + d;
+    initParameters = vec2(0.5, 1);
+    EmitVertex();
+    // p2'
+    gl_Position = projection * view * model * vec4(p2 + w * n2, 0, 1);
+    gTexCoord = vec2(1, 1);
+    hTexCoord = baryP2_Prime.y * vec2(0.5, 0) + baryP2_Prime.z * vec2(1, 1);
+    if (isReversed || isDegenerate) {
+        // edge case, render full color
+		hTexCoord = vec2(1, 0);
+	}
+    gColor = color2;
+    isConvex = 1;
+    posInLocalSpace = p2 + w * n2;
+    initParameters = vec2(1, 1);
+    EmitVertex();
+    EndPrimitive();
+
+
+    
+    
     // linear triangles
 
     // 1st
@@ -331,12 +351,17 @@ float solve_t_Given_S(vec2 p0, vec2 p1, vec2 p2, float S, float totalLength){
     // Newton iteration
     float error = S - getArcLength_t(p0, p1, p2, t);
     float derivative = length(2 * (1 - t) * (p1 - p0) + 2 * t * (p2 - p1));
-    while (abs(error) > 1e-3)
+    while (abs(error) > 1e-2)
     {
         t = t + error / derivative;
 		error = S - getArcLength_t(p0, p1, p2, t);
 		derivative = length(2 * (1 - t) * (p1 - p0) + 2 * t * (p2 - p1));
     }
+//    for (int i = 0; i < 2; ++i) {
+//        t = t + error / derivative;
+//		error = S - getArcLength_t(p0, p1, p2, t);
+//		derivative = length(2 * (1 - t) * (p1 - p0) + 2 * t * (p2 - p1));
+//    }
     return t;
 }
 
@@ -360,11 +385,11 @@ void main() {
 		// the whole segment is a gap
 		return;
 	}
-    segL = s_ti[0];
+    
     // calculate upper bound of the number of solid lines
     int numSolidLines = int(ceil(segLength / (l1 + l2))) + 1;
 
-    
+    lastTexCoord = mod(s_ti[0] / (2 * w), 1);
     for (int i = 0; i < numSolidLines; i++) {
         float t0, t1;
 		t0 = solve_t_Given_S(p0, p1, p2, startLength, segLength);
@@ -378,7 +403,7 @@ void main() {
         else {
             subSegLength = min(l1, segLength - startLength);
         }
-        
+        segL = subSegLength;
 		t1 = solve_t_Given_S(p0, p1, p2, startLength + subSegLength, segLength);
 		// calculate the start and end points of the solid line
 		vec2 p0_solid = quadraticBezier(p0, p1, p2, t0);
@@ -389,6 +414,7 @@ void main() {
 
 		generateConvexBoundary(p0_solid, p1_solid, p2_solid);
         startLength = startLength + subSegLength + l2;
+        lastTexCoord = mod(lastTexCoord + segL / (2 * w), 1.0);
         if (startLength > segLength) {
         // the rendering is over
 			return;

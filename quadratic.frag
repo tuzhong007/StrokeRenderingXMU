@@ -2,6 +2,7 @@
 out vec4 FragColor;
 
 in vec2 gTexCoord;
+in vec2 hTexCoord;
 in vec3 gColor;
 flat in int isConvex;
 in vec2 posInLocalSpace; // position of the vertex in local space
@@ -10,9 +11,12 @@ in vec4 p1d1;
 in vec4 p2d2;
 in vec2 initParameters;
 in float segL;
+in float lastTexCoord;
 
 uniform bool isStencil;
 uniform sampler2D tex0;
+uniform float l1;
+uniform float w;
 
 
 mat2 inverse(mat2 m) {
@@ -38,7 +42,7 @@ vec2 Psi(float u, float v, vec2 p0, vec2 d0, vec2 p1, vec2 d1, vec2 p2, vec2 d2)
 	return (1-u)*(1-u) * (p0 + v2_1 * d0) + 2*u*(1-u) * (p1 + v2_1 * d1) + u*u * (p2 + v2_1 * d2);
 }
 
-void solveUVByNewton()
+vec2 solveUVByNewton()
 {
 	float u, v, v2_1;
 	vec2 p0, d0, p1, d1, p2, d2, uv;
@@ -48,7 +52,7 @@ void solveUVByNewton()
 	uv = initParameters;
 	//uv = vec2(0.5,0.5);
 
-	/*for (int i = 0; i < 9; ++i)
+	for (int i = 0; i < 1; ++i)
 	{
 		u = uv.x, v = uv.y;
 		v2_1 = 2*v-1;
@@ -58,31 +62,23 @@ void solveUVByNewton()
 		JPsi = mat2(dPsi_du, dPsi_dv);
 		inverseJPsi = inverse(JPsi);
 		uv = inverseJPsi * (posInLocalSpace - PsiUV) + uv;
-	}*/
-
-	
-	do
-	{
-		u = uv.x, v = uv.y;
-		v2_1 = 2*v-1;
-		dPsi_du = 2*(1-u) * ((p1 + v2_1 * d1) - (p0 + v2_1 * d0)) + 2*u * ((p2 + v2_1 * d2) - (p1 + v2_1 * d1));
-		dPsi_dv = (1-u)*(1-u) * (p0 + 2 * d0) + 2*u*(1-u) * (p1 + 2 * d1) + u*u * (p2 + 2 * d2);
-		PsiUV = Psi( u,  v,  p0,  d0,  p1,  d1,  p2,  d2);
-		JPsi = mat2(dPsi_du, dPsi_dv);
-		inverseJPsi = inverse(JPsi);
-		uv = inverseJPsi * (posInLocalSpace - PsiUV) + uv;
-	} while (length(PsiUV - posInLocalSpace) > 0.5); 
-
-
-	u = uv.x, v = uv.y;
-	float epsilon = 0.01;
-	float interval = 0.1;
-	if (abs(mod(u, interval)) < epsilon || abs(mod(v, interval)) < epsilon) {
-    // texCoord is a multiple of 0.2
-		FragColor = vec4(0,0,0, 1);
 	}
 
-	FragColor = texture(tex0, vec2(u * 3, v));
+	
+//	do
+//	{
+//		u = uv.x, v = uv.y;
+//		v2_1 = 2*v-1;
+//		dPsi_du = 2*(1-u) * ((p1 + v2_1 * d1) - (p0 + v2_1 * d0)) + 2*u * ((p2 + v2_1 * d2) - (p1 + v2_1 * d1));
+//		dPsi_dv = (1-u)*(1-u) * (p0 + 2 * d0) + 2*u*(1-u) * (p1 + 2 * d1) + u*u * (p2 + 2 * d2);
+//		PsiUV = Psi( u,  v,  p0,  d0,  p1,  d1,  p2,  d2);
+//		JPsi = mat2(dPsi_du, dPsi_dv);
+//		inverseJPsi = inverse(JPsi);
+//		uv = inverseJPsi * (posInLocalSpace - PsiUV) + uv;
+//	} while (length(PsiUV - posInLocalSpace) > 0.5); 
+
+	return uv;
+	
 }
 
 void main()
@@ -99,8 +95,22 @@ void main()
 
 	float sd = g / sqrt(gx * gx + gy * gy);
 	if (isConvex == 0) sd = -sd; 
+	else {
+		// sd to the lower offset curve
+		uv = hTexCoord;
+		uxvx = dFdx(hTexCoord); //anti-aliasing
+		uyvy = dFdy(hTexCoord);
+
+		float h, hx, hy;
+		h = uv.x * uv.x - uv.y;
+		hx = 2 * uv.x * uxvx.x -  uxvx.y;
+		hy = 2 * uv.x * uyvy.x -  uyvy.y;
+
+		float sd2 = -h / sqrt(hx * hx + hy * hy);
+		sd = max(sd, sd2);
+	}
 	if (sd > 0.5) discard;
-	if (isStencil) return;
+	//if (isStencil) return;
 
 //	float alpha = clamp(-sd + 0.5, 0.0, 1.0);
 	float alpha = clamp(-sd + 0.5, 0.0, 1.0);
@@ -109,9 +119,14 @@ void main()
 	//FragColor = vec4(gColor, 1);
 
 
-	// uv for parametrization
-	 //solveUVByNewton();
-
-
-
+//	// uv for parametrization
+//	uv = solveUVByNewton();
+//	float u = uv.x, v = uv.y;
+////	float epsilon = 0.01;
+////	float interval = 0.1;
+////	if (abs(mod(u, interval)) < epsilon || abs(mod(v, interval)) < epsilon) {
+////    // texCoord is a multiple of 0.2
+////		FragColor = vec4(0,0,0, 1);
+////	}
+//	FragColor = texture(tex0, vec2(lastTexCoord + u * segL / (2 * w), v)) * alpha;
 }
