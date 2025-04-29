@@ -74,16 +74,7 @@
     <None Include="quadratic.tese">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="dash.tesc">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="dash.tese">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
     <None Include="quadratic.geom">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="dash.geom">
       <Filter>Resource Files\Shaders</Filter>
     </None>
     <None Include="dash_parallel.geom">
@@ -93,6 +84,18 @@
       <Filter>Resource Files\Shaders</Filter>
     </None>
     <None Include="dash_parallel.tese">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="quadratic_texture.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="quadratic_texture.geom">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="quadratic_texture.tesc">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="quadratic_texture.tese">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>

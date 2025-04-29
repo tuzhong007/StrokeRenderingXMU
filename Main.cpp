@@ -24,14 +24,11 @@ using glm::mat4;
 vector<Vertex> vertices =
 { //     COORDINATES     /        TexCoords      /   Colors  //
 	Vertex { vec3( 200.f, 100.f, 0.0f),     	vec2(0.0f, 0.0f),		vec3(1.0f, 0.0f, 0.0f)},
-	Vertex { vec3( 400.f, 1000.f, 0.0f),     	vec2(0.5f, 0.0f),		vec3(0.0f, 1.0f, 0.0f)},
-	Vertex { vec3( 500.f, 100.f, 0.0f),     	vec2(1.0f, 1.0f),		vec3(0.0f, 0.0f, 1.0f)},
+	Vertex { vec3( 400.f, 800.f, 0.0f),     	vec2(0.5f, 0.0f),		vec3(0.0f, 1.0f, 0.0f)},
+	Vertex { vec3( 600.f, 100.f, 0.0f),     	vec2(1.0f, 1.0f),		vec3(0.0f, 0.0f, 1.0f)},
 }; 
 
-vector<GLuint> indices =
-{
-	0, 1, 2, 
-};
+
 
 int main()
 {
@@ -75,7 +72,7 @@ int main()
 	// Generates Vertex Buffer Object and links it to vertices
 	VBO VBO1(vertices);
 	// Generates Element Buffer Object and links it to indices
-	EBO EBO1(indices);
+	//EBO EBO1(indices);
 
 	// Links VBO attributes such as coordinates and colors to VAO
 	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
@@ -84,14 +81,25 @@ int main()
 	// Unbind all to prevent accidentally modifying them
 	VAO1.Unbind();
 	VBO1.Unbind();
-	EBO1.Unbind();
+	//EBO1.Unbind();
 
+#define TESSELLATION_TEST 0
+#define DASH_TEST 1
+#define TEXTURE_TEST 2
 
+#define TEST_TYPE TEXTURE_TEST
 
-	// Generates Shader object using shaders default.vert and default.frag
-	//Shader quadraticProgram("quadratic.vert", "quadratic.frag", "quadratic.geom", "quadratic.tesc", "quadratic.tese");
+#if TEST_TYPE == TESSELLATION_TEST
+	// curvature guided tessellation program
+	Shader quadraticProgram("quadratic.vert", "quadratic.frag", "quadratic.geom", "quadratic.tesc", "quadratic.tese");
+#elif TEST_TYPE == DASH_TEST
 	// dash rendering program
 	Shader quadraticProgram("quadratic.vert", "quadratic.frag", "dash_parallel.geom", "dash_parallel.tesc", "dash_parallel.tese");
+#elif TEST_TYPE == TEXTURE_TEST
+	// texture mapping program
+	Shader quadraticProgram("quadratic.vert", "quadratic_texture.frag", "quadratic_texture.geom", "quadratic_texture.tesc", "quadratic_texture.tese");
+#endif
+
 	std::string parentDir = (fs::current_path().fs::path::parent_path()).string();
 	std::string texPath = "/Resources/YoutubeOpenGL 6 - Textures/";
 
@@ -120,62 +128,40 @@ int main()
 
 	glEnable(GL_BLEND); 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+	glfwSwapInterval(0);
+#include <chrono>
+	float avgTime = 0;
+	int cnt = 0;
 	while (!glfwWindowShouldClose(window))
 	{
+		auto start = std::chrono::high_resolution_clock::now();
 		// Specify the color of the background
 		glClearColor(1, 1, 1, 1.0f);
 		// Clean the back buffer and depth buffer
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-		//// Make it so the stencil test always passes
-		//glStencilFunc(GL_ALWAYS, 1, 0xFF);
-		//// Enable modifying of the stencil buffer
-		//glStencilMask(0xFF);
-		//glColorMask(0x00, 0x00, 0x00, 0x00);
-		//// Draw the normal model
-		////model.Draw(shaderProgram, camera);
-		
-
-		//glUniform1i(glGetUniformLocation(quadraticProgram.ID, "isStencil"), (int)1);
-		//VAO1.Bind();
-		//glPatchParameteri(GL_PATCH_VERTICES, 3);
-		//glDrawArrays(GL_PATCHES, 0, indices.size());
-
-		//// Make it so only the pixels without the value 1 pass the test
-		//glStencilFunc(GL_EQUAL, 255, 0xFF);
-		//// Disable modifying of the stencil buffer
-		//glStencilMask(0x00);
-		//glColorMask(0xFF, 0xFF, 0xFF, 0xFF);
-		
-		//glUniform1i(glGetUniformLocation(quadraticProgram.ID, "isStencil"), (int)0);
+		glClear(GL_COLOR_BUFFER_BIT);
 		glUniform1f(glGetUniformLocation(quadraticProgram.ID, "w"), (float)50);
-		glUniform1f(glGetUniformLocation(quadraticProgram.ID, "l1"), (float)10);
-		glUniform1f(glGetUniformLocation(quadraticProgram.ID, "l2"), (float)10);
+		glUniform1f(glGetUniformLocation(quadraticProgram.ID, "l1"), (float)50);
+		glUniform1f(glGetUniformLocation(quadraticProgram.ID, "l2"), (float)0);
 		VAO1.Bind();
 		glPatchParameteri(GL_PATCH_VERTICES, 3);
-		glDrawArrays(GL_PATCHES, 0, indices.size());
-
-
-		//// Enable modifying of the stencil buffer
-		//glStencilMask(0xFF);
-		//// Clear stencil buffer
-		//glStencilFunc(GL_ALWAYS, 0, 0xFF);
-
-
-		////debug
-		//glUniform1i(glGetUniformLocation(quadraticProgram.ID, "isStencil"), (int)0);
-		//VAO1.Bind();
-		//glPatchParameteri(GL_PATCH_VERTICES, 3);
-		//glDrawArrays(GL_PATCHES, 0, indices.size());
-
-
+		for (int i = 0; i < 1E3; ++i)
+			glDrawArrays(GL_PATCHES, 0, vertices.size());
 		// Swap the back buffer with the front buffer
 		glfwSwapBuffers(window);
 		// Take care of all GLFW events
 		glfwPollEvents();
+		glFinish();
+		auto end = std::chrono::high_resolution_clock::now();
+		avgTime += std::chrono::duration<float, std::milli>(end - start).count();
+		++cnt;
+		if (cnt % 100 == 0)
+		{
+			std::cout << "Average time: " << avgTime / 100 << " ms" << std::endl;
+			avgTime = 0;
+		}
+		/*std::chrono::duration<float, std::milli> duration = end - start;
+		std::cout << "Time: " << duration.count() << " ms" << std::endl;*/
 	}
-
 
 
 	// Delete all the objects we've created

@@ -72,7 +72,7 @@ void main() {
     
     gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 
-    // Set constant tessellation levels (can be dynamic later)
+    // Set constant tessellation levels
     if (gl_InvocationID == 0) {
         vec2 P0 = gl_in[0].gl_Position.xy; 
         vec2 P1 = gl_in[1].gl_Position.xy;
@@ -82,14 +82,16 @@ void main() {
 
         tcsTexCoord[gl_InvocationID] = TexCoord[gl_InvocationID];
         tcsColor[gl_InvocationID] = color[gl_InvocationID];
+        // the tangent angle variation Phi
         float cosPhi = dot(normalize(P0P1), normalize(P1P2));
         float Phi = acos(cosPhi);
+        // the segment numbers of curvature-tessellated quadratic curve
         int seg = int(ceil((Phi + 1e-3) / 0.5));
-        //segments[gl_InvocationID] = seg; // Number of segments for each edge
+        // the parameters t_i and arc lengths s_t[i] for the endpoints
         t_i[0] = 0; s_ti[0] = 0;
         t_i[seg] = 1; s_ti[seg] = getArcLength_t(P0, P1, P2, 1);
         int maxSolidLineNum = -1;
-        // properties for interior segment points 
+        // properties for interior segment points obtained by curvature tessellation
         for (int i = 1; i < seg; ++i) {
             float u = 1.0 * i / seg;
             float A = 2 * length(P0P1), B = 2 * length(P1P2), C = cosPhi, D = cos(u * Phi);
@@ -98,6 +100,7 @@ void main() {
             float t1 = t1t2.x, t2 = t1t2.y;
             float parameterT = 0.0;
 
+            // determine whether t1 or t2 is the solution
             // a fast validity judge: check if t1 and t2 are in the range [0, 1]
             if (t1 < 0 || t1 > 1) {
                 parameterT = t2;
@@ -119,18 +122,21 @@ void main() {
 		            parameterT = t2;
 	            }
             }
+            
+            // calculate the arc length s_t[i] from t=0 to t=t_i
             s_ti[i] = getArcLength_t(P0, P1, P2, parameterT);
             t_i[i] = parameterT;
             float segLength = s_ti[i] - s_ti[i-1];
-            solidLines_Num_i[i-1] = int(ceil(segLength / (l1 + l2)));
+            solidLines_Num_i[i-1] = int(ceil(segLength / (l1 + l2)))+1;
             maxSolidLineNum = max(maxSolidLineNum, solidLines_Num_i[i-1]);
         }
         float segLength = s_ti[seg] - s_ti[seg - 1];
         solidLines_Num_i[seg - 1] = int(ceil(segLength / (l1 + l2)));
         maxSolidLineNum = max(maxSolidLineNum, solidLines_Num_i[seg - 1]);
 
-        
+        // tessellate the bending curve into {seg} flat ones
         gl_TessLevelOuter[0] = seg;
+        // just an upperbound of the solid line endpoint numbers per flat curve
         gl_TessLevelOuter[1] = maxSolidLineNum * 2; 
         
     }

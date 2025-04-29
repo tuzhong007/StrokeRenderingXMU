@@ -171,6 +171,7 @@ void main() {
     P1sub = p1;
     P2sub = p2;
 
+    // calculate the parameter t for the current point by its arc length
     // if the point is a start point, just use the current start length to calculate t
     if (isStartPoint) {
         parameterT = solve_t_Given_S(p0, p1, p2, currentStartLength, segLength);
@@ -179,7 +180,6 @@ void main() {
 	}
 	else {
 		// if the point is an end point, we need to add the length of the solid line
-		
         parameterT = solve_t_Given_S(p0, p1, p2, currentStartLength + currentSolidLineLength, segLength);
         // mark it's the end point
         renderFlag = 2;

@@ -174,18 +174,19 @@
     <ClInclude Include="VBO.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="dash.geom" />
     <None Include="dash_parallel.geom" />
     <None Include="dash_parallel.tesc" />
     <None Include="dash_parallel.tese" />
     <None Include="geometry.gep" />
-    <None Include="dash.tesc" />
-    <None Include="dash.tese" />
     <None Include="quadratic.frag" />
     <None Include="quadratic.geom" />
     <None Include="quadratic.tesc" />
     <None Include="quadratic.tese" />
     <None Include="quadratic.vert" />
+    <None Include="quadratic_texture.frag" />
+    <None Include="quadratic_texture.geom" />
+    <None Include="quadratic_texture.tesc" />
+    <None Include="quadratic_texture.tese" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
