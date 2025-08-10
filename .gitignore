@@ -1,0 +1,27 @@
+# Build folders
+/build/
+/cmake-build-*/
+
+# Visual Studio files
+*.vcxproj*
+*.sln
+*.user
+*.ipch
+*.opensdf
+*.pdb
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+
+# Compiled object files and binaries
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Others
+*.log
