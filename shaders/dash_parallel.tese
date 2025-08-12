@@ -64,6 +64,16 @@ float getArcLength_t(vec2 p0, vec2 p1, vec2 p2, float t) {
 
 // get the t value for a given arc length
 float solve_t_Given_S(vec2 p0, vec2 p1, vec2 p2, float S, float totalLength){
+
+    if (S < 0.5)
+	{
+		// if S is too small, just return t=0
+		return 0.0;
+	}
+    else if (S > totalLength - 0.5)
+    {
+        return 1;
+    }
     float t = 0.5;
     float R = 2 * dot(p1-p0, p2-p0) / dot(p2-p0, p2-p0) - 1;
     float m4 = R * length(p2-p0);
@@ -161,7 +171,7 @@ void main() {
         currentSolidLineLength = min(l1, segLength - currentStartLength);
     }
 
-    // the control points of the current segment
+    // the control points of the current subcurve
     vec2 p0 = quadraticBezier(P0, P1, P2, t_i[segID]), p1, p2 = quadraticBezier(P0, P1, P2, t_i[segID + 1]);
     vec2 p0p1_direction = 2 * (1 - t_i[segID]) * (P0P1) + 2 * t_i[segID] * (P1P2);
     vec2 p1p2_direction = 2 * (1 - t_i[segID + 1]) * (P0P1) + 2 * t_i[segID + 1] * (P1P2);

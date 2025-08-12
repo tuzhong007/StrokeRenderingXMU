@@ -131,7 +131,7 @@ void main() {
             maxSolidLineNum = max(maxSolidLineNum, solidLines_Num_i[i-1]);
         }
         float segLength = s_ti[seg] - s_ti[seg - 1];
-        solidLines_Num_i[seg - 1] = int(ceil(segLength / (l1 + l2)));
+        solidLines_Num_i[seg - 1] = int(ceil(segLength / (l1 + l2))) + 1;
         maxSolidLineNum = max(maxSolidLineNum, solidLines_Num_i[seg - 1]);
 
         // tessellate the bending curve into {seg} flat ones
