@@ -42,4 +42,7 @@ Main algorithms are implemented on shaders. For instance:
 - Press w, s, or g to increase stroke width, dash segment length, and gap length, respectively. Hold Shift while pressing these keys to decrease the corresponding values.
 
 ## Vedio Demo
-<video controls src="strokeRenderingXMU Demo.mp4" title="Title"></video>
+
+
+https://github.com/user-attachments/assets/d83d22e9-09a2-4e5c-853f-2c776448ddb8
+
