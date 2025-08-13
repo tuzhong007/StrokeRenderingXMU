@@ -26,7 +26,7 @@ Main algorithms are implemented on shaders. For instance:
 
 - Algorithm 3 Newton-based Arc-Length Parameter Computation: *dash_parallel.tese*;
 
-- Algorithm 4 Texture Filling for Approximated Stroke Region: quadratic_texture.frag for Newton iteration on solving the texture coordinate.
+- Algorithm 4 Texture Filling for Approximated Stroke Region: *quadratic_texture.frag* for Newton iteration on solving the texture coordinate.
 
 ## Interaction Notes
 - Left-click to add new control points to the current piecewise quadratic curve. The first three points define the initial curve segment. Each additional click adds a new segment that connects smoothly (C¹ continuity) to the previous curve.
