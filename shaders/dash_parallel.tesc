@@ -9,6 +9,7 @@ uniform float l2; // the gap length of two solid lines
 
 in vec2 TexCoord[];
 in vec3 color[];
+in float prevArcLengthPiecewiseQuadratic[];
 
 out vec2 tcsTexCoord[];
 out vec3 tcsColor[];
@@ -89,7 +90,9 @@ void main() {
         int seg = int(ceil((Phi + 1e-3) / 0.5));
         // the parameters t_i and arc lengths s_t[i] for the endpoints
         t_i[0] = 0; s_ti[0] = 0;
+        s_ti[0] += prevArcLengthPiecewiseQuadratic[0];
         t_i[seg] = 1; s_ti[seg] = getArcLength_t(P0, P1, P2, 1);
+        s_ti[seg] += prevArcLengthPiecewiseQuadratic[0];
         int maxSolidLineNum = -1;
         // properties for interior segment points obtained by curvature tessellation
         for (int i = 1; i < seg; ++i) {
@@ -125,6 +128,7 @@ void main() {
             
             // calculate the arc length s_t[i] from t=0 to t=t_i
             s_ti[i] = getArcLength_t(P0, P1, P2, parameterT);
+            s_ti[i] += prevArcLengthPiecewiseQuadratic[0];
             t_i[i] = parameterT;
             float segLength = s_ti[i] - s_ti[i-1];
             solidLines_Num_i[i-1] = int(ceil(segLength / (l1 + l2))) + 1;

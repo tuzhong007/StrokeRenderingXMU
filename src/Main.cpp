@@ -28,24 +28,13 @@ using glm::mat4;
 #define INTERACTION_ENABLED 1
 #define INTERACTION_MODE INTERACTION_ENABLED
 
-#if INTERACTION_MODE == INTERACTION_ENABLED
-// Control vertex attributes for quadratic curves
-vector<Vertex> vertices =
-{ //     COORDINATES     /        TexCoords      /   Colors  //
-	Vertex { vec3(200.f, 100.f, 0.0f),     	vec2(0.0f, 0.0f),		vec3(1.0f, 0.0f, 0.0f)},
-	Vertex { vec3(400.f, 800.f, 0.0f),     	vec2(0.5f, 0.0f),		vec3(0.0f, 1.0f, 0.0f)},
-	Vertex { vec3(600.f, 100.f, 0.0f),     	vec2(1.0f, 1.0f),		vec3(0.0f, 0.0f, 1.0f)},
-};
-#elif INTERACTION_MODE == INTERACTION_ENABLED
-// Start with an empty vector of vertices
-vector<Vertex> vertices;
-#endif
+
 //-------------------Render Choices-----------------------
 
 
 //-----------------global variables for interaction-------------------------
-VBO* gVBO = nullptr;
-Shader* gShader = nullptr;
+VBO* gVBO = nullptr; // VBO for storing vertex data of position, texture coordinates, and color
+VBO* arcVBO = nullptr; // VBO for storing vertex data of accumulated arc length for piecewise quadratic curves
 int ctlPtCnt = 0; // Count of control points for quadratic curves
 int strokeWidth = 100; // Width of the stroke in pixels
 int dash_l1 = 50; // Length of the dash segment in pixels
@@ -53,7 +42,23 @@ int dash_l2 = 10; // Gap length in pixels
 Shader solidProgram, dashProgram, textureProgram; // Shader programs for different rendering tests
 Shader *quadraticProgram = nullptr; // Pointer to the currently active shader program
 Texture *currentTexture; // Texture for the quadratic curves
-mat4 model, view, projection;
+mat4 model, view, projection; // Transformation matrices for the rendering
+
+#if INTERACTION_MODE == NO_INTERACTION
+// Control vertex attributes for quadratic curves
+vector<Vertex> vertices =
+{ //     COORDINATES     /        TexCoords      /   Colors  //
+	Vertex { vec3(200.f, 100.f, 0.0f),     	vec2(0.0f, 0.0f),		vec3(1.0f, 0.0f, 0.0f)},
+	Vertex { vec3(400.f, 800.f, 0.0f),     	vec2(0.5f, 0.0f),		vec3(0.0f, 1.0f, 0.0f)},
+	Vertex { vec3(600.f, 100.f, 0.0f),     	vec2(1.0f, 1.0f),		vec3(0.0f, 0.0f, 1.0f)},
+};
+// Vector to store accumulated arc length for piecewise quadratic curves
+vector<float> accumulatedArcLength = { 0.0f, 0.0f, 0.0f }; // Initialize accumulated arc length for the three vertices
+#elif INTERACTION_MODE == INTERACTION_ENABLED
+// Start with an empty vector of vertices
+vector<Vertex> vertices;
+vector<float> accumulatedArcLength;
+#endif
 //-----------------global variables for interaction-------------------------
 
 
@@ -62,6 +67,35 @@ mat4 model, view, projection;
 #define DASH_TEST 1
 #define TEXTURE_TEST 2
 #define TEST_TYPE SOLID_TEST
+
+// Get the analytic arclength of the quadratic curve
+// https://stackoverflow.com/questions/11854907/calculate-the-length-of-a-segment-of-a-quadratic-bezier
+float getArcLength(vec2 p0, vec2 p1, vec2 p2) {
+	float x0 = p0.x, y0 = p0.y, x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y;
+	float ax, ay, bx, by, A, B, C, b, c, u, k, L;
+	// check if the quadratic curve is degenerate, or p0p1 and p1p2 are parallel
+	if (abs((x1 - x0) * (y2 - y1) - (x2 - x1) * (y1 - y0)) < 1e-3) {
+		return length(p2 - p0);
+	}
+	ax = x0 - x1 - x1 + x2;
+	ay = y0 - y1 - y1 + y2;
+	bx = x1 + x1 - x0 - x0;
+	by = y1 + y1 - y0 - y0;
+	A = 4.0 * ((ax * ax) + (ay * ay));
+	B = 4.0 * ((ax * bx) + (ay * by));
+	C = (bx * bx) + (by * by);
+	b = B / (2.0 * A);
+	c = C / A;
+	u = 1.0f + b;
+	k = c - (b * b);
+	L = 0.5 * sqrt(A) *
+		(
+			(u * sqrt((u * u) + k))
+			- (b * sqrt((b * b) + k))
+			+ (k * log(abs((u + sqrt((u * u) + k)) / (b + sqrt((b * b) + k)))))
+			);
+	return L;
+}
 
 void insertNewVertex(float x, float y)
 {
@@ -100,11 +134,30 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 			// If we have less than 3 vertices, insert a new vertex at the clicked position
 			insertNewVertex(static_cast<float>(xpos), static_cast<float>(ypos));
 			// Create a new vertex at clicked position
+			if (ctlPtCnt == 3)
+			{
+				accumulatedArcLength.push_back(0.0f); // Initialize accumulated arc length for the first three vertices
+				accumulatedArcLength.push_back(0.0f);
+				accumulatedArcLength.push_back(0.0f);
+				
+			}
 		}
 		else
 		{
-			Vertex lastVertex = vertices.back();
+			Vertex lastVertex = vertices[vertices.size() - 1];
 			Vertex secondLastVertex = vertices[vertices.size() - 2];
+			Vertex thirdLastVertex = vertices[vertices.size() - 3];
+			// Calculate the arc length for the last three vertices
+			float arcLength = getArcLength(
+				vec2(thirdLastVertex.position.x, thirdLastVertex.position.y),
+				vec2(secondLastVertex.position.x, secondLastVertex.position.y),
+				vec2(lastVertex.position.x, lastVertex.position.y)
+			) + accumulatedArcLength.back();
+			// Update the accumulated arc length for the vertices
+			accumulatedArcLength.push_back(arcLength);
+			accumulatedArcLength.push_back(arcLength);
+			accumulatedArcLength.push_back(arcLength);
+
 			insertNewVertex(lastVertex.position.x, lastVertex.position.y);
 			// Determine the position of the control point based on the last two vertices (C1 continuity at joints)
 			float newX = 2 * lastVertex.position.x - secondLastVertex.position.x;
@@ -119,10 +172,14 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		// If we have 3 vertices, we can start rendering the quadratic curve
 		if ((ctlPtCnt % 3) == 0)
 		{
-			// Update VBO data
+			// Update VBO data for position, texture coordinates, and color
 			gVBO->Bind();
 			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_DYNAMIC_DRAW);
 			gVBO->Unbind();
+			// Update VBO data for accumulated arc length
+			arcVBO->Bind();
+			glBufferData(GL_ARRAY_BUFFER, accumulatedArcLength.size() * sizeof(float), accumulatedArcLength.data(), GL_DYNAMIC_DRAW);
+			arcVBO->Unbind();
 		}
 	}
 }
@@ -223,14 +280,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 }
 
-void init()
-{
 
-}
 
 
 int main()
 {
+// OpenGL initialization
 	std::cout << "Interaction Notes:" << std::endl;
 	std::cout << "1. Use mouse to add new control points. The first three points define the first curve. Then, every click will generate a new curve that connects to the clicked position in a C1 continuous way at the joint of previous curve."<< std::endl << std::endl;
 	std::cout << "2. Press key `1', `2', `3' to switch between solid stroke, dashed stroke and texture stroke." << std::endl << std::endl;;
@@ -269,16 +324,18 @@ int main()
 
 	glfwSwapInterval(0);
 
-
+// Create a VAO and VBO for the control points of the quadratic curves
 	VAO VAO1;
 	VAO1.Bind();
 
-	VBO VBO1(vertices);
+	VBO VBO1(vertices), VBO2(accumulatedArcLength);
 	gVBO = &VBO1; // Store the VBO pointer globally for mouse interaction
+	arcVBO = &VBO2; // Store the arc length VBO pointer globally for mouse interaction
 	// Links VBO attributes such as coordinates and colors to VAO
 	VAO1.LinkAttrib(*gVBO, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
 	VAO1.LinkAttrib(*gVBO, 1, 2, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	VAO1.LinkAttrib(*gVBO, 2, 3, GL_FLOAT, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+	VAO1.LinkAttrib(*arcVBO, 3, 1, GL_FLOAT, sizeof(float), (void*)0);
 	VAO1.Unbind();
 	gVBO->Unbind();
 

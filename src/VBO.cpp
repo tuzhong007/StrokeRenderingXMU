@@ -1,6 +1,13 @@
 #include"VBO.h"
 
 // Constructor that generates a Vertex Buffer Object and links it to vertices
+VBO::VBO(std::vector<float>& accumulatedArcLength)
+{
+	glGenBuffers(1, &ID);
+	glBindBuffer(GL_ARRAY_BUFFER, ID);
+	glBufferData(GL_ARRAY_BUFFER, accumulatedArcLength.size() * sizeof(float), accumulatedArcLength.data(), GL_STATIC_DRAW);
+}
+
 VBO::VBO(std::vector<Vertex>& vertices)
 {
 	glGenBuffers(1, &ID);
