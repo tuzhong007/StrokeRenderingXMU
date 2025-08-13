@@ -38,7 +38,7 @@ vec2 solveUVByNewton()
 	upvp = initParameters;
 
 	float ratio = segL / w;
-	for (int i = 0; i < 1; ++i)
+	for (int i = 0; i < 3; ++i)
 	{
 		uv = vec2(upvp.x / ratio, upvp.y);
 		u = uv.x, v = uv.y;

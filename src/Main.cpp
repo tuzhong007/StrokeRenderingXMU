@@ -15,6 +15,7 @@ const unsigned int height = 900;
 using std::vector;
 using glm::vec2;
 using glm::vec3;
+using glm::vec4;
 using glm::mat4;
 
 //-------------------Render Choices-----------------------
@@ -35,8 +36,8 @@ using glm::mat4;
 //-----------------global variables for interaction-------------------------
 VBO* gVBO = nullptr; // VBO for storing vertex data of position, texture coordinates, and color
 VBO* arcVBO = nullptr; // VBO for storing vertex data of accumulated arc length for piecewise quadratic curves
-int ctlPtCnt = 0; // Count of control points for quadratic curves
-int strokeWidth = 100; // Width of the stroke in pixels
+int ctlPtCnt = 0; // Count of control points for the current piecewise quadratic curve
+int strokeWidth = 50; // Width of the stroke in pixels
 int dash_l1 = 50; // Length of the dash segment in pixels
 int dash_l2 = 10; // Gap length in pixels
 Shader solidProgram, dashProgram, textureProgram; // Shader programs for different rendering tests
@@ -120,15 +121,40 @@ void insertNewVertex(float x, float y)
 	vertices.push_back(newVertex);
 }
 
+// Function to get the world position of the cursor based on mouse coordinates to address the issue of the cursor position being in screen space rather than world space
+vec3 getCursorWorldPosition(double xpos, double ypos)
+{
+	// Convert to Normalized Device Coordinates (NDC) [-1, 1]
+	float ndcX = (2.0f * float(xpos)) / width - 1.0f;
+	float ndcY = 1.0f - (2.0f * float(ypos)) / height;  // flip Y axis for OpenGL
+	float ndcZ = 0.0f; 
+
+	vec4 ndcPos(ndcX, ndcY, ndcZ, 1.0f);
+
+	// Compute inverse of combined projection * view matrix
+	mat4 invPV = glm::inverse(projection * view);
+
+	// Unproject to world space
+	vec4 worldPos = invPV * ndcPos;
+	if (worldPos.w != 0.0f)
+		worldPos /= worldPos.w;
+
+	// Compute inverse model matrix to convert to object local space (undo translation, rotation, scale)
+	mat4 invModel = glm::inverse(model);
+	vec4 localPos = invModel * worldPos;
+
+	return vec3(localPos);
+}
+
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
-
-		// Convert y to match OpenGL coords (origin at bottom-left)
-		ypos = height - ypos;
+		vec3 localPos = getCursorWorldPosition(xpos, ypos);
+		xpos = localPos.x; // Get the x coordinate in world space
+		ypos = localPos.y; // Get the y coordinate in world space
 		if (ctlPtCnt < 3)
 		{ 
 			// If we have less than 3 vertices, insert a new vertex at the clicked position
@@ -169,7 +195,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 			insertNewVertex(static_cast<float>(xpos), static_cast<float>(ypos));
 		}
 
-		// If we have 3 vertices, we can start rendering the quadratic curve
 		if ((ctlPtCnt % 3) == 0)
 		{
 			// Update VBO data for position, texture coordinates, and color
@@ -182,6 +207,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 			arcVBO->Unbind();
 		}
 	}
+	else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+	{
+		// Right mouse button pressed - start with a new piecewise quadratic curve
+		ctlPtCnt = 0;
+	}
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -191,17 +221,24 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		bool shiftPressed = (mods & GLFW_MOD_SHIFT);
 		switch (key)
 		{
-		case GLFW_KEY_C:
-
-			break;
-			
-
 		case GLFW_KEY_G:
 			if (shiftPressed)
 				dash_l2 -= 1;
 			else
 				dash_l2 += 1;
 			dash_l2 = std::clamp(dash_l2, 0, 100);
+			break;
+		case GLFW_KEY_C:
+			// Clear the last segment of piecewise quadratic curve
+			ctlPtCnt -= 3;
+			if (ctlPtCnt < 0)
+				ctlPtCnt = 0; // Ensure ctlPtCnt does not go negative
+			// Remove the last three vertices and their corresponding accumulated arc length
+			if (vertices.size() >= 3)
+			{
+				vertices.erase(vertices.end() - 3, vertices.end());
+				accumulatedArcLength.erase(accumulatedArcLength.end() - 3, accumulatedArcLength.end());
+			}
 			break;
 
 		case GLFW_KEY_S:
@@ -280,16 +317,26 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 }
 
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	// Example: scale model up/down
+	float scaleChange = 1.0f + (float)yoffset * 0.1f;
+	model = glm::scale(model, vec3(scaleChange, scaleChange, scaleChange));
+}
 
 
 
 int main()
 {
 // OpenGL initialization
+	std::cout << "GPU-Accelerated Rendering of Vector Strokes with Piecewise Quadratic Approximation, by Xuhai Chen, Guangze Zhang, Wanyi Wang, Prof. Juan Cao and Prof. Zhonggui Chen from Xiamen University." << std::endl << std::endl;
 	std::cout << "Interaction Notes:" << std::endl;
-	std::cout << "1. Use mouse to add new control points. The first three points define the first curve. Then, every click will generate a new curve that connects to the clicked position in a C1 continuous way at the joint of previous curve."<< std::endl << std::endl;
-	std::cout << "2. Press key `1', `2', `3' to switch between solid stroke, dashed stroke and texture stroke." << std::endl << std::endl;;
-	std::cout << "3. Press key `w', `s', `g' to increase stroke width, dashed segment length and gap length. If you want to decrease them, press `shift' at the same time with the keys." << std::endl;
+	std::cout << "1. Left-click to add new control points to the current piecewise quadratic curve. The first three points define the initial curve segment. Each additional click adds a new segment that connects smoothly (C1 continuity) to the previous curve."<< std::endl << std::endl;
+	std::cout << "2. Right-click to start a new piecewise quadratic curve." << std::endl << std::endl;
+	std::cout << "3. Use the scroll wheel to zoom in or zoom out." << std::endl << std::endl;
+	std::cout << "4. Scroll to zoom in or zoom out." << std::endl << std::endl;
+	std::cout << "5. Press keys 1, 2, or 3 to switch between solid stroke, dashed stroke, and textured stroke modes." << std::endl << std::endl;;
+	std::cout << "6. Press w, s, or g to increase stroke width, dash segment length, and gap length, respectively. Hold Shift while pressing these keys to decrease the corresponding values." << std::endl;
 	glfwInit();
 	
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -301,6 +348,7 @@ int main()
 	glfwSetWindowPos(window, 100, 100);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetKeyCallback(window, key_callback);
+	glfwSetScrollCallback(window, scroll_callback);
 
 	if (window == NULL)
 	{
@@ -345,7 +393,7 @@ int main()
 	dashProgram = Shader("../shaders/quadratic.vert", "../shaders/quadratic.frag", "../shaders/dash_parallel.geom", "../shaders/dash_parallel.tesc", "../shaders/dash_parallel.tese");
 	// texture mapping program
 	textureProgram = Shader("../shaders/quadratic.vert", "../shaders/quadratic_texture.frag", "../shaders/quadratic_texture.geom", "../shaders/quadratic_texture.tesc", "../shaders/quadratic_texture.tese");
-	quadraticProgram = &dashProgram; // Set the default shader program to solid rendering
+	quadraticProgram = &solidProgram; // Set the default shader program to solid rendering
 // Texture loading
 	std::string parentDir = (fs::current_path().parent_path()).string();
 	std::string texPath = "./texture/";
