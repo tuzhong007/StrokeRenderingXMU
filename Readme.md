@@ -1,12 +1,13 @@
 #  GPU-Accelerated Rendering of Vector Strokes with Piecewise Quadratic Approximation
 
+
 Xuhai Chen, Guangze Zhang, Wanyi Wang, Prof. Juan Cao and Prof. Zhonggui Chen
 
 [Computer Graphics Group of Xiamen University](https://graphics.xmu.edu.cn/)
 
 ![alt text](image.png)
 
-This repository contains the code implementation for the paper *GPU-Accelerated Rendering of Vector Strokes with Piecewise Quadratic Approximation*, which was accepted at the *CAD/Graphics 2025* conference (Honorable Mention) and published in the journal *Graphical Models*.
+This repository contains the code implementation for the paper *[GPU-Accelerated Rendering of Vector Strokes with Piecewise Quadratic Approximation](https://www.sciencedirect.com/science/article/pii/S1524070325000426)*, which was accepted at the *CAD/Graphics 2025* conference (Honorable Mention) and published in the journal *Graphical Models*.
 
 ## Build
 Microsoft Visual Studio 2022 build:
@@ -41,7 +42,7 @@ Main algorithms are implemented on shaders. For instance:
 
 - Press w, s, or g to increase stroke width, dash segment length, and gap length, respectively. Hold Shift while pressing these keys to decrease the corresponding values.
 
-## Vedio Demo
+## Video Demo
 
 
 https://github.com/user-attachments/assets/d83d22e9-09a2-4e5c-853f-2c776448ddb8
