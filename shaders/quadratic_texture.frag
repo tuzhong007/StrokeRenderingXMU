@@ -6,6 +6,7 @@ in vec2 hTexCoord;
 in vec3 gColor;
 flat in int isConvex;
 flat in int isIntersected;
+flat in int isCW;
 in vec2 posInLocalSpace; // position of the vertex in local space
 in vec4 p0d0;
 in vec4 p1d1;
@@ -38,7 +39,7 @@ vec2 solveUVByNewton()
 	upvp = initParameters;
 
 	float ratio = segL / w;
-	for (int i = 0; i < 3; ++i)
+	for (int i = 0; i < 1; ++i)
 	{
 		uv = vec2(upvp.x / ratio, upvp.y);
 		u = uv.x, v = uv.y;
@@ -115,6 +116,7 @@ void main()
 	uv = solveUVByNewton();
 	float u = uv.x, v = uv.y;
 	u = lastTexCoord + u, v = v;
+	if (isCW == 0) v = 1 - v;
 	float epsilon = 0.02;
 	float interval = 0.1;
 

@@ -23,8 +23,9 @@ layout(location = 8) in float currentStartLength0[];
 out vec2 gTexCoord; // Pass texture coordinates to fragment shader
 out vec2 hTexCoord;
 out vec3 gColor;    // Pass color to fragment shader
-flat out int isConvex;
-flat out int isIntersected; 
+flat out int isConvex; // 1: is the convex triangle so that the inside of quadratic curve has sdf < 0
+flat out int isIntersected; // 1: the offset curve O2(t) intersects with the triangle p0', p1', p2'
+flat out int isCW; // 1: the p0, p1, p2 is clockwise so that the UV texture is not flipped; otherwise we need V <- 1-V to keep the correct orientation of texture
 out vec2 posInLocalSpace; // position of the vertex in local space
 out vec4 p0d0;
 out vec4 p1d1;
@@ -59,9 +60,14 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     vec2 tg0 = p1 - p0, tg2 = p2 - p1;
     // unit normal vectors at p0, p2
     vec2 n0 = normalize(vec2(-tg0.y, tg0.x)), n2 = normalize(vec2(-tg2.y, tg2.x));
-    // make sure the normal vector is pointing outside
-    if (dot(n0, tg2) > 0) n0 = -n0;
-    if (dot(n2, tg0) < 0) n2 = -n2;
+//    if (dot(n0, tg2) > 0) n0 = -n0;
+//    if (dot(n2, tg0) < 0) n2 = -n2;
+    if (dot(n0, tg2) > 0){
+        // make sure the normal vector is pointing outside
+        n0 = -n0; n2 = -n2;
+        isCW = 1;
+    }
+    else isCW = 0;
     float cosPhi = dot(tg0, tg2) / length(tg0) / length(tg2);
     float cosPhi_2 = sqrt((cosPhi + 1.0) / 2);
     // offset of p1
@@ -148,10 +154,6 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     EmitVertex();
     EndPrimitive();
 
-
-    
-    
-    // linear triangles
 
     // 1st
     // p0'

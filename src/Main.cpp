@@ -37,7 +37,7 @@ using glm::mat4;
 VBO* gVBO = nullptr; // VBO for storing vertex data of position, texture coordinates, and color
 VBO* arcVBO = nullptr; // VBO for storing vertex data of accumulated arc length for piecewise quadratic curves
 int ctlPtCnt = 0; // Count of control points for the current piecewise quadratic curve
-int strokeWidth = 50; // Width of the stroke in pixels
+float strokeWidth = 50; // Width of the stroke in pixels
 int dash_l1 = 50; // Length of the dash segment in pixels
 int dash_l2 = 10; // Gap length in pixels
 Shader solidProgram, dashProgram, textureProgram; // Shader programs for different rendering tests
@@ -254,7 +254,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 				strokeWidth -= 1;
 			else
 				strokeWidth += 1;
-			strokeWidth = std::clamp(strokeWidth, 0, 100);
+			strokeWidth = std::clamp(strokeWidth, 0.f, 100.f);
 			break;
 			
 
@@ -311,7 +311,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 				strokeWidth -= 1;
 			else
 				strokeWidth += 1;
-			strokeWidth = std::clamp(strokeWidth, 0, 100);
+			strokeWidth = std::clamp(strokeWidth, 0.f, 100.f);
 			break;
 		}
 	}
