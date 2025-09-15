@@ -47,8 +47,10 @@ void generateConvexBoundary(vec2 p0, vec2 p1, vec2 p2)
     // unit normal vectors at p0, p2
     vec2 n0 = normalize(vec2(-tg0.y, tg0.x)), n2 = normalize(vec2(-tg2.y, tg2.x));
     // make sure the normal vector is pointing outside
-    if (dot(n0, tg2) > 0) n0 = -n0;
-    if (dot(n2, tg0) < 0) n2 = -n2;
+    if (dot(n0, tg2) > 0){
+        // make sure the normal vector is pointing outside
+        n0 = -n0; n2 = -n2;
+    }
     float cosPhi = dot(tg0, tg2) / length(tg0) / length(tg2);
     float cosPhi_2 = sqrt((cosPhi + 1.0) / 2);
     // offset of p1
