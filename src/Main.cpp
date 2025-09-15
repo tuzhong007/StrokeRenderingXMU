@@ -9,6 +9,7 @@
 #include <iostream>
 namespace fs = std::filesystem;
 
+GLFWwindow* window = NULL;
 const unsigned int width = 1600;
 const unsigned int height = 900;
 
@@ -125,8 +126,11 @@ void insertNewVertex(float x, float y)
 vec3 getCursorWorldPosition(double xpos, double ypos)
 {
 	// Convert to Normalized Device Coordinates (NDC) [-1, 1]
-	float ndcX = (2.0f * float(xpos)) / width - 1.0f;
-	float ndcY = 1.0f - (2.0f * float(ypos)) / height;  // flip Y axis for OpenGL
+	int fbWidth, fbHeight;
+	glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+	// Convert to Normalized Device Coordinates (NDC) [-1, 1]
+	float ndcX = (2.0f * float(xpos)) / fbWidth - 1.0f;
+	float ndcY = 1.0f - (2.0f * float(ypos)) / fbHeight;  // flip Y axis for OpenGL
 	float ndcZ = 0.0f; 
 
 	vec4 ndcPos(ndcX, ndcY, ndcZ, 1.0f);
@@ -344,7 +348,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	
 	glfwWindowHint(GLFW_SAMPLES, 8);  // Request 8x MSAA
-	GLFWwindow* window = glfwCreateWindow(width, height, "GPU-Accelerated Rendering of Vector Strokes with Piecewise Quadratic Approximation", NULL, NULL);
+	window = glfwCreateWindow(width, height, "GPU-Accelerated Rendering of Vector Strokes with Piecewise Quadratic Approximation", NULL, NULL);
 	glfwSetWindowPos(window, 100, 100);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetKeyCallback(window, key_callback);
@@ -359,7 +363,10 @@ int main()
 	glfwMakeContextCurrent(window);
 
 	gladLoadGL();
-	glViewport(0, 0, width, height);
+	// retrieve framebuffer size, because the actual framebuffer size may be different from the window size, especially on high-DPI displays
+	int fbWidth, fbHeight;
+	glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+	glViewport(0, 0, fbWidth, fbHeight);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);
 	glEnable(GL_BLEND);
@@ -405,7 +412,7 @@ int main()
 // Transformation matrices
 	model = mat4(1.0f);
 	view = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	projection = glm::ortho(0.0f, width * 1.0f, 0.0f, height * 1.0f, 0.1f, 2.0f);
+	projection = glm::ortho(0.0f, fbWidth * 1.0f, 0.0f, fbHeight * 1.0f, 0.1f, 2.0f);
 	
 	
 #include <chrono>
